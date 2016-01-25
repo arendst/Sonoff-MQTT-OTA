@@ -1,0 +1,284 @@
+SDK_1_5_1  = 0
+
+BOOTBIN = boot_v1.4\(b1\).bin
+ifeq ($(SDK_1_5_1), 1)
+  BOOTBIN = boot_v1.5.bin
+endif
+
+BUILD_BASE = .objs
+FW_BASE    = .firmwares
+
+# change this, with your configuration
+COMPILE_ROOT ?= ${HOME}/esp-open-sdk/xtensa-lx106-elf/bin
+
+# fota setting
+FOTA_PROFILE ?= DEMO
+FOTA_CONFIGFILE ?= ${HOME}/.fotaclient-config.json
+
+# say 512, 1024, 4096
+FLASH_SIZE ?= 4096
+
+# base directory of the ESP8266 SDK package, absolute
+SDK_BASE   = ${ROOT}/esp-sdk
+# ssptool.py path and port
+ESPPORT    ?= /dev/ttyUSB0
+ESPTOOL    = $(ROOT)/tools/esptool/esptool.py
+# script to gen bin
+GEN_APPBIN = $(ROOT)/esp-sdk/tools/gen_appbin.py
+
+# script to upload firmware for OTA
+##FOTA_CLIENT = $(ROOT)/tools/fotaclient/fota-client.js
+FOTA_CLIENT = $(ROOT)/work/espupload.php
+
+# name for the target project
+TARGET    ?= app
+# name for the prject
+PROJECT   ?= ESPPROJECT
+# which modules (subdirectories) of the project to include in compiling
+MODULES   += ./user
+# include dev 
+DEVS      := ${ROOT}/dev ${ROOT}/dev/driver ${ROOT}/dev/utils
+
+####
+#### create .version file when it's not existed yet
+#### 0.0.1 is the default version to start
+#### todo: check version, should be like 100.101.255
+####
+ifeq ("$(wildcard ./.version)","")
+$(shell touch ./.version && echo "0.0.1" > ./.version)
+endif
+VERSION := $(shell cat ./.version)
+
+# libraries used in this project, mainly provided by the SDK
+LIBS += c gcc hal pp phy net80211 lwip wpa main crypto
+
+# compiler flags using during compilation of source files
+CFLAGS = -Os -g -O2 -Wpointer-arith -Wundef -Werror -Wl,-EL -fno-inline-functions -nostdlib -mlongcalls -mtext-section-literals  -D__ets__ -DICACHE_FLASH
+CFLAGS += -DVERSION='"$(VERSION)"'
+CFLAGS += -DPROJECT='"$(PROJECT)"'
+
+# linker flags used to generate the main object file
+LDFLAGS   = -nostdlib -Wl,--no-check-sections -u call_user_start -Wl,-static
+
+# linker script used for the above linkier step
+IMAGE ?= 1
+OTA ?= 1
+
+ifeq ($(OTA), 0)
+  napp = 0
+else
+  ifeq ($(IMAGE), 2)
+    napp = 2
+  else
+    napp = 1
+  endif
+endif
+
+# files for flashing, w/o OTA
+ifeq ($(FLASH_SIZE), 512)
+	flash 			 = 512
+else ifeq ($(FLASH_SIZE), 1024)
+	flash 			 = 1024
+else ifeq ($(FLASH_SIZE), 4096)
+	flash 			 = 2048
+endif
+
+BIN_NAME_1   = 0x00000
+BIN_NAME_2   = 0x40000
+BIN_NAME_OTA = user$(IMAGE)
+
+###
+### define linker and output bin w/out OTA update option
+###
+ifeq ($(OTA), 0)
+	BOOT 			= 0
+	BIN_NAME_1	:= $(addprefix $(FW_BASE)/,$(BIN_NAME_1).bin)
+	BIN_NAME_2	:= $(addprefix $(FW_BASE)/,$(BIN_NAME_2).bin)
+	BIN_OUT   = $(BIN_NAME_1) $(BIN_NAME_2)
+	LD_SCRIPT = eagle.app.v6.ld
+else ifeq ($(OTA), 1)
+	BOOT 			= 2
+	BIN_NAME_OTA	:= $(addprefix $(FW_BASE)/,$(BIN_NAME_OTA).bin)
+	ifeq ($(FLASH_SIZE), 512)
+		LD_SCRIPT = eagle.app.v6.new.$(flash).app$(IMAGE).ld
+	else ifeq ($(FLASH_SIZE), 1024)
+		LD_SCRIPT = eagle.app.v6.new.$(flash).app$(IMAGE).ld
+	else ifeq ($(FLASH_SIZE), 4096)
+		LD_SCRIPT = eagle.app.v6.new.$(flash).ld
+	endif
+	BIN_OUT   = $(BIN_NAME_OTA)
+endif
+
+ifeq ($(OTA), 1)
+ifeq ($(IMAGE), 2)
+	ifeq ($(FLASH_SIZE), 512)
+		IMAGE_ADDRESS = 0x41000
+	else ifeq ($(FLASH_SIZE), 1024)
+		IMAGE_ADDRESS = 0x81000
+	endif
+else
+	IMAGE_ADDRESS = 0x01000
+endif
+endif
+
+mode    = 0
+freqdiv = 0
+
+ifeq ($(FLASH_SIZE), 256)
+  size = 1
+else ifeq ($(FLASH_SIZE), 1024)
+  size = 2
+else ifeq ($(FLASH_SIZE), 2048)
+  size = 3
+else ifeq ($(FLASH_SIZE), 4096)
+  size = 6
+else
+	size = 0
+endif
+
+# various paths from the SDK used in this project
+SDK_LIBDIR = lib
+SDK_LDDIR  = ld
+SDK_INCDIR = include
+
+# select which tools to use as compiler, librarian and linker
+CC      := $(COMPILE_ROOT)/xtensa-lx106-elf-gcc
+AR      := $(COMPILE_ROOT)/xtensa-lx106-elf-ar
+LD      := $(COMPILE_ROOT)/xtensa-lx106-elf-gcc
+OBJCOPY := ${COMPILE_ROOT}/xtensa-lx106-elf-objcopy
+OBJDUMP := ${COMPILE_ROOT}/xtensa-lx106-elf-objdump
+
+### APPS
+APP_ROOT := $(ROOT)/apps
+ifdef APPS
+  APPINCLUDES += ${foreach APP, $(APPS), ${wildcard $(APP_ROOT)/$(APP)/Makefile.$(APP)}}
+  -include $(APPINCLUDES)
+  APP_DIR += $(addprefix $(APP_ROOT)/,$(APPS)) 
+endif
+
+####
+#### no user configurable options below here
+####
+SRC_DIR   += $(MODULES) $(DEVS) $(APP_DIR)
+
+SDK_LIBDIR  := $(addprefix $(SDK_BASE)/,$(SDK_LIBDIR))
+SDK_INCDIR  := $(addprefix -I$(SDK_BASE)/,$(SDK_INCDIR))
+
+SRC_FILE  := ${foreach sdir, $(SRC_DIR), ${subst ${sdir}/,,${wildcard $(sdir)/*.c}}}
+OBJ_FILE  := $(patsubst %.c,$(BUILD_BASE)/%.o,$(SRC_FILE))
+LIBS      := $(addprefix -l,$(LIBS))
+APP_AR    := $(addprefix $(BUILD_BASE)/,$(TARGET)_app.a)
+TARGET_OUT:= $(addprefix $(BUILD_BASE)/,$(TARGET).out)
+
+LD_SCRIPT := $(addprefix -T$(SDK_BASE)/$(SDK_LDDIR)/,$(LD_SCRIPT))
+
+INCDIR    := $(addprefix -I,$(SRC_DIR))
+
+CFLAGS    += $(INCDIR) $(SDK_INCDIR)
+
+V ?= $(VERBOSE)
+ifeq ("$(V)","1")
+Q :=
+vecho := @true
+else
+Q := @
+vecho := @echo
+endif
+
+vpath %.c $(SRC_DIR)
+
+.PHONY: all flash clean $(TARGET_OUT)
+
+all: $(FW_BASE) $(BUILD_BASE) $(BIN_OUT)
+	$(vecho) "Project $(PROJECT), version $(VERSION)"
+
+$(BIN_NAME_1): $(TARGET_OUT)
+	$(vecho) "No boot needed."
+	@mv eagle.app.flash.bin $@
+	$(vecho) "Generate $@ successully"
+
+$(BIN_NAME_2): $(TARGET_OUT)
+	@mv eagle.app.v6.irom0text.bin $@
+	@rm eagle.app.v6.*
+	$(vecho) "Generate $@ successully"
+
+$(BIN_NAME_OTA): $(TARGET_OUT)
+	@mv eagle.app.flash.bin $@
+	@rm eagle.app.v6.*
+	$(vecho) "Support boot_v1.2 and +"
+	@echo "Generate $@ successully"
+
+$(TARGET_OUT): $(APP_AR)
+###
+### TWO link script for user1 and user2
+### force to build *.out with new link script
+###
+	$(vecho) "LD $(LD_SCRIPT) $@"
+	$(Q) $(LD) -L$(SDK_LIBDIR) $(LD_SCRIPT) $(LDFLAGS) -Wl,--start-group $(LIBS) $(APP_AR) -Wl,--end-group -o $@
+	@$(OBJCOPY) --only-section .text -O binary $@ eagle.app.v6.text.bin
+	@$(OBJCOPY) --only-section .data -O binary $@ eagle.app.v6.data.bin
+	@$(OBJCOPY) --only-section .rodata -O binary $@ eagle.app.v6.rodata.bin
+	@$(OBJCOPY) --only-section .irom0.text -O binary $@ eagle.app.v6.irom0text.bin
+	@COMPILE=gcc python $(GEN_APPBIN) $@ $(BOOT) $(mode) $(freqdiv) $(size) $(napp)
+	$(vecho) "$(GEN_APPBIN) $@ $(BOOT) $(mode) $(freqdiv) $(size) $(napp)"
+
+$(APP_AR): $(OBJ_FILE)
+	$(Q) $(AR) cru $@ $^
+
+### Provide way to create $(BUILD_BASE) if it has been removed by make clean
+$(BUILD_BASE):
+	$(Q) mkdir -p $@
+
+$(FW_BASE):
+	$(Q) mkdir -p $@
+
+flash:
+ifeq ($(FLASH_SIZE), 512)
+ifeq ($(OTA), 0)
+	-$(ESPTOOL) --port $(ESPPORT) write_flash 0x00000 $(BIN_NAME_1) 0x40000 $(BIN_NAME_2) 0x7C000 $(ROOT)/esp-sdk/bin/esp_init_data_default.bin 0x7E000 $(ROOT)/esp-sdk/bin/blank.bin
+else ifeq ($(OTA), 1)
+	-$(ESPTOOL) --port $(ESPPORT) write_flash 0x00000 $(ROOT)/esp-sdk/bin/$(BOOTBIN) $(IMAGE_ADDRESS) $(BIN_NAME_OTA) 0x7C000 $(ROOT)/esp-sdk/bin/esp_init_data_default.bin 0x7E000 $(ROOT)/esp-sdk/bin/blank.bin
+endif
+else ifeq ($(FLASH_SIZE), 1024)
+ifeq ($(OTA), 0)
+	-$(ESPTOOL) --port $(ESPPORT) write_flash 0x00000 $(BIN_NAME_1) 0x80000 $(BIN_NAME_2) 0xFC000 $(ROOT)/esp-sdk/bin/esp_init_data_default.bin 0xFE000 $(ROOT)/esp-sdk/bin/blank.bin
+else ifeq ($(OTA), 1)
+	-$(ESPTOOL) --port $(ESPPORT) write_flash -fs 8m 0x00000 $(ROOT)/esp-sdk/bin/$(BOOTBIN) $(IMAGE_ADDRESS) $(BIN_NAME_OTA) 0xFC000 $(ROOT)/esp-sdk/bin/esp_init_data_default.bin 0xFE000 $(ROOT)/esp-sdk/bin/blank.bin
+endif
+else ifeq ($(FLASH_SIZE), 4096)
+ifeq ($(OTA), 0)
+	-$(ESPTOOL) --port $(ESPPORT) write_flash 0x00000 $(BIN_NAME_1) 0x80000 $(BIN_NAME_2) 0xFC000 $(ROOT)/esp-sdk/bin/esp_init_data_default.bin 0xFE000 $(ROOT)/esp-sdk/bin/blank.bin
+else ifeq ($(OTA), 1)
+	-$(ESPTOOL) --port $(ESPPORT) write_flash -fs 32m-c1 0x00000 $(ROOT)/esp-sdk/bin/$(BOOTBIN) $(IMAGE_ADDRESS) $(BIN_NAME_OTA) 0x3FC000 $(ROOT)/esp-sdk/bin/esp_init_data_default.bin 0x3FE000 $(ROOT)/esp-sdk/bin/blank.bin
+endif
+endif
+	# ${ROOT}/tools/serialdump-linux -b115200 ${ESPPORT}
+	# screen ${ESPPORT} 115200
+
+login:
+	${ROOT}/tools/serialdump-linux -b115200 ${ESPPORT}
+	# screen ${ESPPORT} 115200
+
+IMAGE1 := $(addprefix $(FW_BASE)/, user1.bin)
+IMAGE2 := $(addprefix $(FW_BASE)/, user2.bin)
+register:
+	-$(FOTA_CLIENT) --application $(PROJECT) --version $(VERSION) --i1 $(IMAGE1) --i2 $(IMAGE2)
+
+clean:
+	$(Q) rm -f $(APP_AR)
+	$(Q) rm -f $(TARGET_OUT)
+	$(Q) rm -rf $(BUILD_BASE)
+	$(Q) rm -rf $(FW_BASE)
+
+### Automatic dependency generation
+${BUILD_BASE}/%.d: %.c | $(BUILD_BASE)
+	@set -e; rm -f $@; \
+	$(CC) -MM $(CFLAGS) $< > $@.$$$$; \
+	sed 's,\($*\)\.o[ :]*,$(BUILD_BASE)/\1.o $@ : ,g' < $@.$$$$ > $@; \
+	rm -f $@.$$$$
+
+${BUILD_BASE}/%.o : %.c
+	$(vecho)  "CC -c $< -o $@"
+	$(Q) $(CC) $(CFLAGS)  -c $< -o $@
+
+-include ${addprefix $(BUILD_BASE)/,$(SRC_FILE:.c=.d)}
