@@ -288,6 +288,7 @@ void state_cb(void *arg)
   } else {
     holdcount++;
     if (holdcount == (STATES *4)) {  // 4 seconds button hold
+      CFG_Default();
       multipress = 0;
       restartflag = 4;               // Allow 4 second delay to release button
       blinks = 2;
