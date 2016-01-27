@@ -1,0 +1,124 @@
+#!/usr/bin/python
+#
+# domoticz-lua-mqtt by Theo Arends
+#
+# Provides Domoticz with MQTT
+#
+# **** Start of user configuration values
+
+broker = "localhost"       # MQTT broker ip address or name
+broker_port = 1883         # MQTT broker port
+
+pub_prefix = "stat"        # Publish topic prefix either stat or cmnd
+
+# **** End of user configuration values
+
+import sys
+import paho.mqtt.client as mqtt
+
+if len(sys.argv) != 3:
+  sys.exit(0)
+
+'''
+Expect values to receive:
+
+Sensors:
+domoticz-lua-mqtt 'Buiten_Humidity' '53'
+domoticz-lua-mqtt 'Buiten_Dewpoint' '1.2'
+domoticz-lua-mqtt 'Buiten_Temperature' '10.4'
+domoticz-lua-mqtt 'Buiten_Barometer' '1018.8'
+domoticz-lua-mqtt 'Werkkamer_Humidity' '43'
+domoticz-lua-mqtt 'Werkkamer_Temperature' '21.6'
+domoticz-lua-mqtt 'Werkkamer_Dewpoint' '8.5'
+domoticz-lua-mqtt 'Woonkamer_Temperature' '17.9'
+domoticz-lua-mqtt 'Lichtsterkte_Utility' '63'
+domoticz-lua-mqtt 'Stroomverbruik_Utility' '5156.4'
+domoticz-lua-mqtt 'Keuken_Dewpoint' '6.8'
+domoticz-lua-mqtt 'Keuken_Humidity' '43'
+domoticz-lua-mqtt 'Keuken_Temperature' '19.7'
+domoticz-lua-mqtt 'Slaapkamer_Temperature' '19.5'
+domoticz-lua-mqtt 'Zonkracht_Utility' '452.8'
+
+Switches:
+domoticz-lua-mqtt 'Werkkamer led' 'On'
+domoticz-lua-mqtt 'Domo Afwezig' 'Off'
+domoticz-lua-mqtt 'Werkkamer buro spot' 'Set Level: 26 %'
+'''
+
+device = sys.argv[1]
+avalue = sys.argv[2]
+
+if device == "Werkkamer ledstrip":
+  pub_prefix = "cmnd"
+  device = "strip1"
+
+if device == "Werkkamer ledring":
+  pub_prefix = "cmnd"
+  device = "ring1"
+
+if device == "Werkkamer ring 2":
+  pub_prefix = "cmnd"
+  device = "ring2"
+
+if device == "Test sonoff1":
+  pub_prefix = "cmnd"
+  device = "sonoff1"
+
+if device == "Test sonoff2":
+  pub_prefix = "cmnd"
+  device = "sonoff2"
+
+if device == "Test sonoff3":
+  pub_prefix = "cmnd"
+  device = "sonoff3"
+
+if avalue[:9] == "Set Level":
+  part = avalue.split(" ",4)
+  payload = part[2]
+  mytype = "/DIMMER"
+else:
+  payload = avalue
+  mytype = "/LIGHT"
+  
+try:
+  part = device.split("_",2)
+  device = part[0]
+  if part[1] == "Temperature":
+    mytype = "/TEMP"
+  if part[1] == "Humidity":
+    mytype = "/HUM"
+  if part[1] == "Barometer":
+    mytype = "/PRESSURE"
+  if part[1] == "Dewpoint":
+    mytype = "/DEWPOINT"
+  if part[1] == "Wind":
+    mytype = "/WIND"
+  if part[1] == "Gust":
+    mytype = "/GUST"
+  if part[1] == "Rain":
+    mytype = "/RAIN"
+  if part[1] == "Utility":
+    if part[0] == "Lichtsterkte":
+      mytype = "/LUX"
+    if part[0] == "Stroomverbruik":
+      mytype = "/WH"
+    if part[0] == "Zonkracht":
+      mytype = "/RADIATION"
+      
+  if device != "Keuken" and device != "Slaapkamer":
+    device = ""
+except:
+  pass
+
+if len(device) != 0:
+  mydevice = device.replace(" ","_")
+
+  mytopic = pub_prefix + "/" + mydevice + mytype
+#  print("MQTT  published |"+mytopic+"|"+payload+"|")
+
+  try:
+    client = mqtt.Client()
+    client.connect(broker, broker_port)
+    client.publish(mytopic, payload)
+  except:
+    pass
