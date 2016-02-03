@@ -8,7 +8,7 @@ Compile source and flash once to sonoff using cable connection as shown in [Pete
 ## Usage
 The button on sonoff provides the following features:
 
-- a short press toggles the relay. This will blink the LED two times and sends a MQTT status message like ```stat/sonoff/POWER on```.
+- a short press toggles the relay. This will blink the LED twice and sends a MQTT status message like ```stat/sonoff/POWER on```.
 
 - three short presses start Wifi smartconfig which allows for SSID and Password configuration using a mobile phone. The green LED will blink during the smartconfig period for 100 seconds. The MQTT server still needs to be configured using the ```user_config.h``` file.
 
@@ -19,7 +19,7 @@ The button on sonoff provides the following features:
 
 Sonoff responds to the following MQTT commands:
 
-- The relay can be controlled by ```cmnd/sonoff/power on```, ```cmns/sonoff/power off``` or ```cmnd/sonoff/power toggle```. The LED will blink two times and sends a MQTT status message like ```stat/sonoff/POWER on```. The same function can be initiated with ```cmnd/sonoff/light on```.
+- The relay can be controlled by ```cmnd/sonoff/power on```, ```cmns/sonoff/power off``` or ```cmnd/sonoff/power toggle```. The LED will blink twice and sends a MQTT status message like ```stat/sonoff/POWER on```. The same function can be initiated with ```cmnd/sonoff/light on```.
 
 - The MQTT topic can be changed with ```cmnd/sonoff/topic sonoff1``` which reboots sonoff and makes it available for MQTT commands like ```cmnd/sonoff1/power on```.
 
