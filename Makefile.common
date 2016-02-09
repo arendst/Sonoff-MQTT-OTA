@@ -1,3 +1,4 @@
+SDK_1_4    = 1
 SDK_1_5_1  = 0
 
 BOOTBIN = boot_v1.4\(b1\).bin
@@ -64,13 +65,16 @@ LDFLAGS   = -nostdlib -Wl,--no-check-sections -u call_user_start -Wl,-static
 IMAGE ?= 1
 OTA ?= 1
 
-ifeq ($(OTA), 0)
-  napp = 0
-else
-  ifeq ($(IMAGE), 2)
-    napp = 2
+napp = 
+ifeq ($(SDK_1_4), 0)
+  ifeq ($(OTA), 0)
+    napp = 0
   else
-    napp = 1
+    ifeq ($(IMAGE), 2)
+      napp = 2
+    else
+      napp = 1
+    endif
   endif
 endif
 
