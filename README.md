@@ -1,5 +1,5 @@
 ## Sonoff-MQTT-OTA
-Provide ESP8266 based [itead Sonoff](https://www.itead.cc/sonoff-wifi-wireless-switch.html) with MQTT and OTA firmware.
+Provide ESP8266 based [itead Sonoff](https://www.itead.cc/sonoff-wifi-wireless-switch.html) with MQTT and 'Over the Air' or OTA firmware.
 ## Prerequisite
 Install ESP8266 development environment from [esp8266-dev](https://github.com/nqd/esp8266-dev).
 
@@ -7,11 +7,11 @@ Install ESP8266 development environment from [esp8266-dev](https://github.com/nq
 
 - Replace file ```Makefile.common``` in directory ```esp8266-dev```.
 
-Install a local webserver for 'Over the Air' or OTA and copy directory ```api``` in webroot.
+Install a local web server for OTA and copy directory ```api``` in webroot.
 ## Compile and upload
 Compile source with ```make``` and flash once to sonoff using cable connection as shown in [Peter Scargill's blog](http://tech.scargill.net/itead-slampher-and-sonoff) with ```make flash```. Do not connect AC power during the flash cable connection. 
 
-Compile and upload OTA images with ```make clean; make IMAGE=1; make register; make clean; make IMAGE=2; make register```.
+Compile and upload OTA images to web server with ```make clean; make IMAGE=1; make register; make clean; make IMAGE=2; make register```.
 
 Note: this software is not compatible with Pete's implementation.
 ## Usage
