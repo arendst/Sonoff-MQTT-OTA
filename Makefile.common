@@ -1,10 +1,6 @@
-SDK_1_4    = 1
-SDK_1_5_1  = 0
-
-BOOTBIN = boot_v1.4\(b1\).bin
-ifeq ($(SDK_1_5_1), 1)
-  BOOTBIN = boot_v1.5.bin
-endif
+SDK_VERSION = 1.4
+# SDK_VERSION = 1.5
+# SDK_VERSION = 1.5.x
 
 BUILD_BASE = .objs
 FW_BASE    = .firmwares
@@ -61,12 +57,21 @@ CFLAGS += -DPROJECT='"$(PROJECT)"'
 # linker flags used to generate the main object file
 LDFLAGS   = -nostdlib -Wl,--no-check-sections -u call_user_start -Wl,-static
 
+PRE_SDK_1_5 = 1
+BOOTBIN = boot_v1.4\(b1\).bin
+ifeq ($(SDK_VERSION), 1.5)
+  PRE_SDK_1_5  = 0
+else ifeq ($(SDK_VERSION), 1.5.x)
+  PRE_SDK_1_5  = 0
+  BOOTBIN = boot_v1.5.bin
+endif
+
 # linker script used for the above linkier step
 IMAGE ?= 1
 OTA ?= 1
 
 napp = 
-ifeq ($(SDK_1_4), 0)
+ifeq ($(PRE_SDK_1_5), 0)
   ifeq ($(OTA), 0)
     napp = 0
   else
