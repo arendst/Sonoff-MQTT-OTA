@@ -2,9 +2,18 @@
 Provide ESP8266 based [itead Sonoff](https://www.itead.cc/sonoff-wifi-wireless-switch.html) with MQTT and OTA firmware.
 ## Prerequisite
 Install ESP8266 development environment from [esp8266-dev](https://github.com/nqd/esp8266-dev).
-Install a local webserver for OTA and copy api folder in webroot.
+
+- Create directory ```esp8266-dev/work``` and copy directory ```sonoff``` and file ```espupload.php``` into it.
+
+- Copy file ```Makefile.common``` to directory ```esp8266-dev``` replacing the current file.
+
+Install a local webserver for OTA and copy directory ```api``` in webroot.
 ## Compile and upload
-Compile source and flash once to sonoff using cable connection as shown in [Peter Scargill's blog](http://tech.scargill.net/itead-slampher-and-sonoff). Do not connect AC power during the flash cable connection. Note: this software is not compatible with his implementation.
+Compile source with ```make``` and flash once to sonoff using cable connection as shown in [Peter Scargill's blog](http://tech.scargill.net/itead-slampher-and-sonoff) with ```make flash```. Do not connect AC power during the flash cable connection. 
+
+Note: this software is not compatible with Pete's implementation.
+
+Compile OTA images with ```make clean; make IMAGE=1; make register; make clean; make IMAGE=2; make register```.
 ## Usage
 The button on sonoff provides the following features:
 
