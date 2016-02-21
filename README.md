@@ -12,7 +12,7 @@ Install a local web server for OTA and copy directory ```api``` in webroot.
 ## Compile and upload
 Update ```sonoff/user/user_config.h``` with your specific Wifi and MQTT parameters.
 
-Compile source with ```make``` and flash once to sonoff using cable connection as shown in [Peter Scargill's blog](http://tech.scargill.net/itead-slampher-and-sonoff) with ```make flash```. Do not connect AC power during the flash cable connection. 
+Compile source with ```make``` and flash once to sonoff using cable connection as shown in [Peter Scargill's blog](http://tech.scargill.net/itead-slampher-and-sonoff) with ```make flash```. **Do not connect AC power during the flash cable connection**. 
 
 Compile and upload OTA images to your web server with ```make clean; make IMAGE=1; make register; make clean; make IMAGE=2; make register```.
 
@@ -34,7 +34,48 @@ Sonoff responds to the following MQTT commands:
 - show status information by ```cmnd/sonoff/status 1```
 
 Most MQTT commands will result in a status feedback like ```stat/sonoff/POWER On```.
+## Commands supported
+The firmware supports both a serial and a MQTT Man Machine interface. The serial interface is set to 115200 bps. The MQTT commands ar constructed as ```cmnd/sonoff/<command>```. The following commands are recognised:
+Command | Description
+------- | -----------
+power | Show current power state as On or Off
+power on | Turn power On
+power off | Turn power Off
+power toggle | Toggle power
+power 1 | Turn power On
+power 0 | Turn power Off
+power 2 | Toggle power
+light | Show current power state as On or Off
+light on | Turn power On
+light off | Turn power Off
+light toggle | Toggle power
+light 1 | Turn power On
+light 0 | Turn power Off
+light 2 | Toggle power
+status | Show abbreviated status information
+status 1 | Show all status information
+restart 1 | Restart sonoff
+reset 1 | Reset sonoff parameters to ```user_config.h``` values and restart
+ssid | Show current Wifi SSId
+ssid 1 | Reset Wifi SSId to ```user_config.h``` value and restart
+ssid <your-ssid> | Set Wifi SSId and restart
+password | Show current Wifi password
+password 1 | Reset Wifi password to ```user_config.h``` value and restart
+password <your-password> | Set Wifi password and restart
+host | Show current MQTT host
+host 1 | Reset MQTT host to ```user_config.h``` value and restart
+host <your-host> | Set MQTT host and restart
+topic | Show current MQTT topic
+topic 1 | Reset MQTT topic to ```user_config.h``` value and restart
+topic <your-topic> | Set MQTT topic and restart
+otaurl | Show current otaurl
+otaurl 1 | Reset otaurl to ```user_config.h``` value
+otaurl <your-otaurl> | Set otaurl
+upgrade 1 | Download ota firmware from your web server and restart
+timezone | Show current timezone
+timezone <-12 .. 12> | Set timezone
 
-See the code for other features.
-## Tips
-To aid in finding the IP address of sonoff the network name will be ```ESP-<MQTT topic>```. So the default name is ```ESP-sonoff```.
+## Tip
+- To aid in finding the IP address of sonoff the network name will be ```ESP-<MQTT topic>```. So the default name is ```ESP-sonoff```.
+- The initial firmware from ```api/sonoff/user1.bin``` can be flashed using the SDK 1.4 provided bin files with the following esptool.py command line:
+```esptool.py --port /dev/ttyUSB0 write_flash -fs 8m 0x00000 boot_v1.4\(b1\).bin 0x01000 user1.bin 0xFC000 esp_init_data_default.bin 0xFE000 blank.bin```

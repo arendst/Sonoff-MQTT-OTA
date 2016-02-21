@@ -4,7 +4,7 @@
 *
 */
 #include "ets_sys.h"
-#include "driver/uart.h"
+#include "uart.h"
 #include "osapi.h"
 #include "config.h"
 #include "user_interface.h"
@@ -21,17 +21,9 @@
 #define INFO(...)
 #endif
 
-//#define REL_PIN       2              // GPIO 02 = ESP-12 Blue Led test
-//#define REL_MUX       PERIPHS_IO_MUX_GPIO2_U
-//#define REL_FUNC      FUNC_GPIO2
-
-#define REL_PIN       12             // GPIO 12 = Red Led and Relais (0 = Off, 1 = On)
+#define REL_PIN       12             // GPIO 12 = Red Led and Relay (0 = Off, 1 = On)
 #define REL_MUX       PERIPHS_IO_MUX_MTDI_U
 #define REL_FUNC      FUNC_GPIO12
-
-//#define LED_PIN       2              // GPIO 02 = ESP-12 Blue Led test
-//#define LED_MUX       PERIPHS_IO_MUX_GPIO2_U
-//#define LED_FUNC      FUNC_GPIO2
 
 #define LED_PIN       13             // GPIO 13 = Green Led (0 = On, 1 = Off)
 #define LED_MUX       PERIPHS_IO_MUX_MTCK_U
@@ -91,23 +83,11 @@ mqttConnectedCb(uint32_t *args)
   os_sprintf(stopic, "%s/%s/NAME", PUB_PREFIX, sysCfg.mqtt_topic);
   os_sprintf(svalue, "Sonoff switch");
   MQTT_Publish(client, stopic, svalue, strlen(svalue), 0, 0);
+  os_printf("NAME = %s\n", svalue);
   os_sprintf(stopic, "%s/%s/VERSION", PUB_PREFIX, sysCfg.mqtt_topic);
   os_sprintf(svalue, "%s", VERSION);
   MQTT_Publish(client, stopic, svalue, strlen(svalue), 0, 0);
-}
-
-void ICACHE_FLASH_ATTR
-mqttDisconnectedCb(uint32_t *args)
-{
-  MQTT_Client* client = (MQTT_Client*)args;
-  INFO("MQTT: Disconnected\r\n");
-}
-
-void ICACHE_FLASH_ATTR
-mqttPublishedCb(uint32_t *args)
-{
-  MQTT_Client* client = (MQTT_Client*)args;
-  INFO("MQTT: Published\r\n");
+  os_printf("VERSION = %s\n", svalue);
 }
 
 void ICACHE_FLASH_ATTR
@@ -175,17 +155,34 @@ mqttDataCb(uint32_t *args, const char* topic, uint32_t topic_len, const char *da
         os_sprintf(svalue, "1 to upgrade");
     }
     else if (!strcmp(type,"OTAURL")) {
-      if ((data_len > 0) && (data_len < 80)) {
-        if (payload == 1)
-          strcpy(sysCfg.otaUrl, OTA_URL);
-        else
-          strcpy(sysCfg.otaUrl, dataBuf);
-      }
+      if ((data_len > 0) && (data_len < 80))
+        strcpy(sysCfg.otaUrl, ((payload == 1) ? OTA_URL : dataBuf));
       os_sprintf(svalue, "%s", sysCfg.otaUrl);
+    }
+    else if (!strcmp(type,"SSID")) {
+      if ((data_len > 0) && (data_len < 32)) {
+        strcpy(sysCfg.sta_ssid, ((payload == 1) ? STA_SSID : dataBuf));
+        restartflag = 2;
+      }
+      os_sprintf(svalue, "%s", sysCfg.sta_ssid);
+    }
+    else if (!strcmp(type,"PASSWORD")) {
+      if ((data_len > 0) && (data_len < 64)) {
+        strcpy(sysCfg.sta_pwd, ((payload == 1) ? STA_PASS : dataBuf));
+        restartflag = 2;
+      }
+      os_sprintf(svalue, "%s", sysCfg.sta_pwd);
+    }
+    else if (!strcmp(type,"HOST")) {
+      if ((data_len > 0) && (data_len < 32)) {
+        strcpy(sysCfg.mqtt_host, ((payload == 1) ? MQTT_HOST : dataBuf));
+        restartflag = 2;
+      }
+      os_sprintf(svalue, "%s", sysCfg.mqtt_host);
     }
     else if (!strcmp(type,"TOPIC")) {
       if ((data_len > 0) && (data_len < 32)) {
-        strcpy(sysCfg.mqtt_topic, dataBuf);
+        strcpy(sysCfg.mqtt_topic, ((payload == 1) ? MQTT_TOPIC : dataBuf));
         restartflag = 2;
       }
       os_sprintf(svalue, "%s", sysCfg.mqtt_topic);
@@ -193,9 +190,17 @@ mqttDataCb(uint32_t *args, const char* topic, uint32_t topic_len, const char *da
     else if (!strcmp(type,"RESTART")) {
       if ((data_len > 0) && (payload == 1)) {
         restartflag = 2;
-        os_sprintf(svalue, "Restart");
+        os_sprintf(svalue, "Restarting");
       } else
         os_sprintf(svalue, "1 to restart");
+    }
+    else if (!strcmp(type,"RESET")) {
+      if ((data_len > 0) && (payload == 1)) {
+        CFG_Default();
+        restartflag = 2;
+        os_sprintf(svalue, "Reset and Restarting");
+      } else
+        os_sprintf(svalue, "1 to reset");
     }
     else if (!strcmp(type,"TIMEZONE")) {
       if ((data_len > 0) && (payload >= -12) && (payload <= 12)) {
@@ -227,9 +232,14 @@ mqttDataCb(uint32_t *args, const char* topic, uint32_t topic_len, const char *da
       blinks = 1;
       INFO("*** Syntax error \r\n");
       os_sprintf(stopic, "%s/%s/SYNTAX", PUB_PREFIX, sysCfg.mqtt_topic);
-      strcpy(svalue, "Status, Upgrade, Otaurl, Restart, Topic, Timezone, Light, Power");
+      strcpy(svalue, "Status, Upgrade, Otaurl, Restart, Reset, SSId, Password, Host, Topic, Timezone, Light, Power");
     }
     MQTT_Publish(client, stopic, svalue, strlen(svalue), 0, 0);
+    if (type == NULL)
+      os_sprintf(stopic, "SYNTAX");
+    else
+      os_sprintf(stopic, "%s", type);
+    os_printf("%s = %s\n", stopic, svalue);
   }
   os_free(topicBuf);
   os_free(dataBuf);
@@ -244,6 +254,7 @@ send_power()
   os_sprintf(stopic, "%s/%s/%s", PUB_PREFIX, sysCfg.mqtt_topic, sysCfg.mqtt_subtopic);
   strcpy(svalue, (sysCfg.power == 0) ? "Off" : "On");
   MQTT_Publish(&mqttClient, stopic, svalue, strlen(svalue), 0, 0);
+  os_printf("%s = %s\n", sysCfg.mqtt_subtopic, svalue);
 }
 
 void ICACHE_FLASH_ATTR
@@ -255,17 +266,32 @@ send_heartbeat()
   os_sprintf(stopic, "%s/%s/HEARTBEAT", PUB_PREFIX, sysCfg.mqtt_topic);
   os_sprintf(svalue, "%d", heartbeat);
   MQTT_Publish(&mqttClient, stopic, svalue, strlen(svalue), 0, 0);
+  os_printf("HEARTBEAT = %s\n", svalue);
 }
 
 void state_cb(void *arg)
 {
   uint8_t button;
+  char stopic[128], svalue[128];
+  char *token;
 
   state++;
   if (state == STATES) {             // Every second
     state = 0;
     rtc_second();
     if ((rtcTime.Minute == 0) && (rtcTime.Second == 30)) send_heartbeat();
+  }
+
+  if (gotSerial) {
+    gotSerial = 0;
+    token = strtok(serialInBuf, " ");
+    os_sprintf(stopic, "%s/%s/%s", SUB_PREFIX, sysCfg.mqtt_topic, token);
+    token = strtok(NULL, "");
+    if (token == NULL)
+      os_sprintf(svalue, "");
+    else
+      os_sprintf(svalue, "%s", token);
+    mqttDataCb((uint32_t*)&mqttClient, stopic, strlen(stopic), svalue, strlen(svalue));
   }
 
   button = GPIO_INPUT_GET(KEY_PIN);
@@ -350,7 +376,6 @@ user_init(void)
   char stopic[32];
 
   uart_init(BIT_RATE_115200, BIT_RATE_115200);
-//  os_delay_us(1000000);
 
   CFG_Load();
 
@@ -364,8 +389,6 @@ user_init(void)
   os_sprintf(stopic, "%s/%s/lwt", PUB_PREFIX, sysCfg.mqtt_topic);
   MQTT_InitLWT(&mqttClient, stopic, "offline", 0, 0);
   MQTT_OnConnected(&mqttClient, mqttConnectedCb);
-  MQTT_OnDisconnected(&mqttClient, mqttDisconnectedCb);
-  MQTT_OnPublished(&mqttClient, mqttPublishedCb);
   MQTT_OnData(&mqttClient, mqttDataCb);
 
   WIFI_Connect(sysCfg.sta_ssid, sysCfg.sta_pwd, sysCfg.mqtt_topic, wifiConnectCb);
