@@ -36,6 +36,7 @@ Sonoff responds to the following MQTT commands:
 Most MQTT commands will result in a status feedback like ```stat/sonoff/POWER On```.
 ## Commands supported
 The firmware supports both a serial and a MQTT Man Machine interface. The serial interface is set to 115200 bps. The MQTT commands ar constructed as ```cmnd/sonoff/<command>```. The following commands are recognised:
+
 Command | Description
 ------- | -----------
 power | Show current power state as On or Off
