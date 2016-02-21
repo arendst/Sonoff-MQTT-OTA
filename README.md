@@ -74,7 +74,7 @@ otaurl 1 | Reset otaurl to ```user_config.h``` value
 otaurl your-otaurl | Set otaurl
 upgrade 1 | Download ota firmware from your web server and restart
 timezone | Show current timezone
-timezone <-12 .. 12> | Set timezone
+timezone -12 .. 12 | Set timezone
 
 ## Tip
 - To aid in finding the IP address of sonoff the network name will be ```ESP-<MQTT topic>```. So the default name is ```ESP-sonoff```.
