@@ -59,19 +59,19 @@ restart 1 | Restart sonoff
 reset 1 | Reset sonoff parameters to ```user_config.h``` values and restart
 ssid | Show current Wifi SSId
 ssid 1 | Reset Wifi SSId to ```user_config.h``` value and restart
-ssid <your-ssid> | Set Wifi SSId and restart
+ssid your-ssid | Set Wifi SSId and restart
 password | Show current Wifi password
 password 1 | Reset Wifi password to ```user_config.h``` value and restart
-password <your-password> | Set Wifi password and restart
+password your-password | Set Wifi password and restart
 host | Show current MQTT host
 host 1 | Reset MQTT host to ```user_config.h``` value and restart
-host <your-host> | Set MQTT host and restart
+host your-host | Set MQTT host and restart
 topic | Show current MQTT topic
 topic 1 | Reset MQTT topic to ```user_config.h``` value and restart
-topic <your-topic> | Set MQTT topic and restart
+topic your-topic | Set MQTT topic and restart
 otaurl | Show current otaurl
 otaurl 1 | Reset otaurl to ```user_config.h``` value
-otaurl <your-otaurl> | Set otaurl
+otaurl your-otaurl | Set otaurl
 upgrade 1 | Download ota firmware from your web server and restart
 timezone | Show current timezone
 timezone <-12 .. 12> | Set timezone
