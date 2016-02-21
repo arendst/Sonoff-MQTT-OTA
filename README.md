@@ -8,7 +8,7 @@ Copy the sonoff code files as follows:
 - Create directory ```esp8266-dev/work``` and copy directory ```sonoff``` and file ```espupload.php``` into it
 - Replace file ```Makefile.common``` in directory ```esp8266-dev```
 
-Install a local web server for OTA and copy directory ```api``` in webroot.
+Install php and a local web server (ie apache) for OTA and copy directory ```api``` in webroot.
 ## Compile and upload
 Update ```sonoff/user/user_config.h``` with your specific Wifi and MQTT parameters.
 
@@ -76,7 +76,7 @@ upgrade 1 | Download ota firmware from your web server and restart
 timezone | Show current timezone
 timezone -12 .. 12 | Set timezone
 
-## Tip
+## Tips
 - To aid in finding the IP address of sonoff the network name will be ```ESP-<MQTT topic>```. So the default name is ```ESP-sonoff```.
 - The initial firmware from ```api/sonoff/user1.bin``` can be flashed using the SDK 1.4 provided bin files with the following esptool.py command line:
 ```esptool.py --port /dev/ttyUSB0 write_flash -fs 8m 0x00000 boot_v1.4\(b1\).bin 0x01000 user1.bin 0xFC000 esp_init_data_default.bin 0xFE000 blank.bin```
