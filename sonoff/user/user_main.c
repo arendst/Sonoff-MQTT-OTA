@@ -139,7 +139,7 @@ mqttDataCb(uint32_t *args, const char* topic, uint32_t topic_len, const char *da
 
     if (!strcmp(type,"STATUS")) {
       os_sprintf(svalue, "%s, %s, %s, %d, %d",
-        VERSION, sysCfg.mqtt_topic, sysCfg.mqtt_subtopic, sysCfg.timezone, sysCfg.power);
+        VERSION, sysCfg.mqtt_topic, sysCfg.mqtt_subtopic, sysCfg.power, sysCfg.timezone);
       if ((data_len > 0) && (payload == 1)) {
         os_sprintf(svalue, "%s, %s, %s, %s, %s, %d",
           svalue, sysCfg.otaUrl, sysCfg.sta_ssid, sysCfg.sta_pwd, sysCfg.mqtt_host, heartbeat);
