@@ -6,9 +6,9 @@
 #endif
 
 // GPIO05 - Default configuration on low
-#define DEF_PIN  5
-#define DEF_MUX  PERIPHS_IO_MUX_GPIO5_U
-#define DEF_FUNC FUNC_GPIO5
+//#define DEF_PIN  5
+//#define DEF_MUX  PERIPHS_IO_MUX_GPIO5_U
+//#define DEF_FUNC FUNC_GPIO5
 
 typedef struct{
   uint32_t cfg_holder;

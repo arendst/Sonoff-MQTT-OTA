@@ -62,18 +62,18 @@ void ICACHE_FLASH_ATTR
 CFG_Load()
 {
   INFO("Load configuration from flash ...\r\n");
-  PIN_FUNC_SELECT(DEF_MUX, DEF_FUNC);
-  PIN_PULLUP_EN(DEF_MUX);
-  GPIO_DIS_OUTPUT(DEF_PIN);
-  uint8_t pintest = GPIO_INPUT_GET(DEF_PIN);
+//  PIN_FUNC_SELECT(DEF_MUX, DEF_FUNC);
+//  PIN_PULLUP_EN(DEF_MUX);
+//  GPIO_DIS_OUTPUT(DEF_PIN);
+//  uint8_t pintest = GPIO_INPUT_GET(DEF_PIN);
   os_delay_us(1000000);
-  pintest = GPIO_INPUT_GET(DEF_PIN);
-  if (pintest == 0)
-    CFG_Default();    // Default configuration on pin low
-  else {
+//  pintest = GPIO_INPUT_GET(DEF_PIN);
+//  if (pintest == 0)
+//    CFG_Default();    // Default configuration on pin low
+//  else {
     spi_flash_read((CFG_LOCATION + 3) * SPI_FLASH_SEC_SIZE, (uint32 *)&saveFlag, sizeof(SAVE_FLAG));
     spi_flash_read((CFG_LOCATION + saveFlag.flag) * SPI_FLASH_SEC_SIZE, (uint32 *)&myCfg, sizeof(SYSCFG));
     if(myCfg.cfg_holder != CFG_HOLDER) CFG_Default();
     sysCfg = myCfg;
-  }
+//  }
 }
