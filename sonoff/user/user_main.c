@@ -376,6 +376,7 @@ user_init(void)
   char stopic[32];
 
   uart_init(BIT_RATE_115200, BIT_RATE_115200);
+  os_delay_us(1000000);
 
   CFG_Load();
 
