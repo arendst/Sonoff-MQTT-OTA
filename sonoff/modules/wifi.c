@@ -131,8 +131,8 @@ WIFI_Check(uint8_t param)
       wifi_smartconfig();
       break;
     default:
-      INFO("Wifi: WIFI_STATUS\r\n");
       if (wificounter <= 0) {
+        INFO("Wifi: WIFI_STATUS\r\n");
         wificounter = CHKSECS;
         wifi_check_ip();
       }
