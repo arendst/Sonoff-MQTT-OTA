@@ -35,7 +35,9 @@ Sonoff responds to the following MQTT commands:
 
 Most MQTT commands will result in a status feedback like ```stat/sonoff/POWER On```.
 ## Commands supported
-The firmware supports both a **serial** and a **MQTT** Man Machine interface. The serial interface is set to 115200 bps. The MQTT commands are constructed as ```cmnd/sonoff/<command>```. The following commands are recognised by both topic and grouptopic:
+The firmware supports both a **serial** and a **MQTT** Man Machine interface. The serial interface is set to 115200 bps. The MQTT commands are constructed as ```cmnd/sonoff/<command>```. 
+
+The following commands are recognised by both topic and grouptopic:
 
 Command | Description
 ------- | -----------
@@ -85,7 +87,7 @@ otaurl 1 | Reset otaurl to ```user_config.h``` value
 otaurl your-otaurl | Set otaurl
 upgrade 1 | Download ota firmware from your web server and restart
 
-If the same topic has been defined to more than one sonoff an individual sonoff can still be addressed by the fall back topic MQTT_CLIENT_ID as defined in user_config.h. The fall back topic will be DVES_<last six digits of sonoff MAC address>.
+If the same topic has been defined to more than one sonoff an individual sonoff can still be addressed by the fall back topic MQTT_CLIENT_ID as defined in user_config.h. The fall back topic will be ```DVES_<last six digits of sonoff MAC address>```.
 ## Tips
 - To aid in finding the IP address of sonoff the network name will be ```ESP-<MQTT topic>```. So the default name is ```ESP-sonoff```
 - The initial firmware from ```api/sonoff/user1.bin``` can be flashed using the SDK 1.4 provided bin files with the following esptool.py command line:
