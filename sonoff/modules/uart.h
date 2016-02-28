@@ -99,8 +99,7 @@ typedef struct {
     int                      buff_uart_no;  //indicate which uart use tx/rx buffer
 } UartDevice;
 
-extern uint8_t gotSerial;
-extern char serialInBuf[128];
+char serialInBuf[128];
 
 void uart_init(UartBautRate uart0_br, UartBautRate uart1_br);
 void uart0_sendStr(const char *str);

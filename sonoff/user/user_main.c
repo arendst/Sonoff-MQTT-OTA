@@ -282,15 +282,12 @@ void state_cb(void *arg)
     if ((rtcTime.Minute == 0) && (rtcTime.Second == 30)) send_heartbeat();
   }
 
-  if (gotSerial) {
-    gotSerial = 0;
+  if (serialInBuf[0]) {
     token = strtok(serialInBuf, " ");
     os_sprintf(stopic, "%s/%s/%s", SUB_PREFIX, sysCfg.mqtt_topic, token);
     token = strtok(NULL, "");
-    if (token == NULL)
-      os_sprintf(svalue, "");
-    else
-      os_sprintf(svalue, "%s", token);
+    os_sprintf(svalue, "%s", (token == NULL) ? "" : token);
+    serialInBuf[0] = 0;
     mqttDataCb((uint32_t*)&mqttClient, stopic, strlen(stopic), svalue, strlen(svalue));
   }
 

@@ -8,11 +8,11 @@
  *
  * Modification history:
  *     2014/3/12, v1.0 create this file.
+ *     2016/2/25, v1.1 add receive buffer.
 *******************************************************************************/
 #include "ets_sys.h"
 #include "osapi.h"
 #include "uart.h"
-#include "osapi.h"
 #include "uart_register.h"
 
 #if TDEBUG
@@ -22,10 +22,9 @@
 #endif
 
 // petes buffer for serial in
-uint8_t gotSerial = 0;
+//char serialInBuf[128];
 uint8_t serialInBufPtr = 0;
 char tempSerialInBuf[128];
-char serialInBuf[128];
 
 // UartDev is defined and initialized in rom code.
 extern UartDevice    UartDev;
@@ -228,7 +227,6 @@ CMD_Input(uint8_t data)
         tempSerialInBuf[serialInBufPtr] = 0;
         strcpy(serialInBuf, tempSerialInBuf);
         serialInBufPtr = 0;
-        gotSerial = 1;
       }
     }
   }
@@ -276,7 +274,6 @@ uart0_rx_intr_handler(void *para)
       RcvChar = READ_PERI_REG(UART_FIFO(UART0)) & 0xFF;
       CMD_Input(RcvChar);
     }
-
   }
 
   if(UART_RXFIFO_FULL_INT_ST == (READ_PERI_REG(UART_INT_ST(UART0)) & UART_RXFIFO_FULL_INT_ST))
@@ -309,6 +306,8 @@ uart_init(UartBautRate uart0_br, UartBautRate uart1_br)
 
   // install uart1 putc callback
   os_install_putc1((void *)uart0_write_char);
+
+  serialInBuf[0] = 0;
 }
 
 void ICACHE_FLASH_ATTR
