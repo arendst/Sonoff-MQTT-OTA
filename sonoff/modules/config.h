@@ -10,6 +10,7 @@ typedef struct{
   char sta_ssid[32];
   char sta_pwd[64];
   char mqtt_host[32];
+  char mqtt_grptopic[32];
   char mqtt_topic[32];
   char otaUrl[80];
 

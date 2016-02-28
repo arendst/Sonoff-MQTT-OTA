@@ -35,7 +35,7 @@ Sonoff responds to the following MQTT commands:
 
 Most MQTT commands will result in a status feedback like ```stat/sonoff/POWER On```.
 ## Commands supported
-The firmware supports both a **serial** and a **MQTT** Man Machine interface. The serial interface is set to 115200 bps. The MQTT commands are constructed as ```cmnd/sonoff/<command>```. The following commands are recognised:
+The firmware supports both a **serial** and a **MQTT** Man Machine interface. The serial interface is set to 115200 bps. The MQTT commands are constructed as ```cmnd/sonoff/<command>```. The following commands are recognised by both topic and grouptopic:
 
 Command | Description
 ------- | -----------
@@ -55,6 +55,16 @@ light 0 | Turn power Off
 light 2 | Toggle power
 status | Show abbreviated status information
 status 1 | Show all status information
+grouptopic | Show current MQTT group topic
+grouptopic 1 | Reset MQTT group topic to ```user_config.h``` value and restart
+grouptopic your-grouptopic | Set MQTT group topic and restart
+timezone | Show current timezone
+timezone -12 .. 12 | Set timezone
+
+The following commands are recognised by topic only:
+
+Command | Description
+------- | -----------
 restart 1 | Restart sonoff
 reset 1 | Reset sonoff parameters to ```user_config.h``` values and restart
 ssid | Show current Wifi SSId
@@ -69,15 +79,15 @@ host your-host | Set MQTT host and restart
 topic | Show current MQTT topic
 topic 1 | Reset MQTT topic to ```user_config.h``` value and restart
 topic your-topic | Set MQTT topic and restart
+smartconfig 1 | Start smart config
 otaurl | Show current otaurl
 otaurl 1 | Reset otaurl to ```user_config.h``` value
 otaurl your-otaurl | Set otaurl
 upgrade 1 | Download ota firmware from your web server and restart
-timezone | Show current timezone
-timezone -12 .. 12 | Set timezone
 
 If the same topic has been defined to more than one sonoff an individual sonoff can still be addressed by the fall back topic MQTT_CLIENT_ID as defined in user_config.h. The fall back topic will be DVES_<last six digits of sonoff MAC address>.
 ## Tips
-- To aid in finding the IP address of sonoff the network name will be ```ESP-<MQTT topic>```. So the default name is ```ESP-sonoff```.
+- To aid in finding the IP address of sonoff the network name will be ```ESP-<MQTT topic>```. So the default name is ```ESP-sonoff```
 - The initial firmware from ```api/sonoff/user1.bin``` can be flashed using the SDK 1.4 provided bin files with the following esptool.py command line:
 ```esptool.py --port /dev/ttyUSB0 write_flash -fs 8m 0x00000 boot_v1.4\(b1\).bin 0x01000 user1.bin 0xFC000 esp_init_data_default.bin 0xFE000 blank.bin```
+- Use the group topic to address several sonoffs with one (restricted) MQTT command

@@ -32,6 +32,7 @@ CFG_Default()
   strcpy(sysCfg.sta_ssid, STA_SSID);
   strcpy(sysCfg.sta_pwd, STA_PASS);
   strcpy(sysCfg.mqtt_host, MQTT_HOST);
+  strcpy(sysCfg.mqtt_grptopic, MQTT_GRPTOPIC);
   strcpy(sysCfg.mqtt_topic, MQTT_TOPIC);
   strcpy(sysCfg.otaUrl, OTA_URL);
 
