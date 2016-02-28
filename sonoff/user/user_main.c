@@ -70,6 +70,15 @@ wifiConnectCb(uint8_t status)
 }
 
 void ICACHE_FLASH_ATTR
+MQTT_Publish_Tx(MQTT_Client *client, const char* topic, const char* data, int data_length, int qos, int retain)
+{
+  MQTT_Publish(client, topic, data, data_length, qos, retain);
+#ifdef SERIAL_IO
+  os_printf("%s = %s\n", strrchr(topic,'/')+1, data);
+#endif
+}
+
+void ICACHE_FLASH_ATTR
 mqttConnectedCb(uint32_t *args)
 {
   char stopic[40], svalue[40];
@@ -79,53 +88,56 @@ mqttConnectedCb(uint32_t *args)
 
   os_sprintf(stopic, "%s/%s/#", SUB_PREFIX, sysCfg.mqtt_topic);
   MQTT_Subscribe(client, stopic, 0);
+  os_sprintf(stopic, "%s/"MQTT_CLIENT_ID"/#", SUB_PREFIX, system_get_chip_id());  // Fall back topic
+  MQTT_Subscribe(client, stopic, 0);
 
   os_sprintf(stopic, "%s/%s/NAME", PUB_PREFIX, sysCfg.mqtt_topic);
   os_sprintf(svalue, "Sonoff switch");
-  MQTT_Publish(client, stopic, svalue, strlen(svalue), 0, 0);
-  os_printf("NAME = %s\n", svalue);
+  MQTT_Publish_Tx(client, stopic, svalue, strlen(svalue), 0, 0);
   os_sprintf(stopic, "%s/%s/VERSION", PUB_PREFIX, sysCfg.mqtt_topic);
   os_sprintf(svalue, "%s", VERSION);
-  MQTT_Publish(client, stopic, svalue, strlen(svalue), 0, 0);
-  os_printf("VERSION = %s\n", svalue);
+  MQTT_Publish_Tx(client, stopic, svalue, strlen(svalue), 0, 0);
+  os_sprintf(stopic, "%s/%s/FALLBACKTOPIC", PUB_PREFIX, sysCfg.mqtt_topic);
+  os_sprintf(svalue, MQTT_CLIENT_ID, system_get_chip_id());
+  MQTT_Publish_Tx(client, stopic, svalue, strlen(svalue), 0, 0);
 }
 
 void ICACHE_FLASH_ATTR
 mqttDataCb(uint32_t *args, const char* topic, uint32_t topic_len, const char *data, uint32_t data_len)
 {
-  int i;
-  char *str, *p, *type = NULL;
+  uint8_t i, grpflg = 0;
+  char *str, *p, *mtopic = NULL, *type = NULL;
   char stopic[40], svalue[200];
 
   char *topicBuf = (char*)os_zalloc(topic_len+1),
        *dataBuf = (char*)os_zalloc(data_len+1),
        *dataBufUc = (char*)os_zalloc(data_len+1);
-  char *topicPostBuf = topicBuf + strlen(SUB_PREFIX) + strlen(sysCfg.mqtt_topic) + 1;
 
   MQTT_Client* client = (MQTT_Client*)args;
 
   os_memcpy(topicBuf, topic, topic_len);
   topicBuf[topic_len] = 0;
+  i = 0;
+  for (str = strtok_r(topicBuf, "/", &p); str && i < 3; str = strtok_r(NULL, "/", &p))
+  {
+    switch (i) {
+    case 0:  // CMND
+      break;
+    case 1:  // TOPIC / DVES_123456
+      mtopic = str;
+      break;
+    case 2:  // TEXT
+      type = str;
+    }
+    i++;
+  }
+  if (type != NULL) for(i = 0; i < strlen(type); i++) type[i] = toupper(type[i]);
 
   os_memcpy(dataBuf, data, data_len);
   dataBuf[data_len] = 0;
+  for(i = 0; i <= data_len; i++) dataBufUc[i] = toupper(dataBuf[i]);
 
-  uint8_t stlen = strlen(topicPostBuf);
-  uint8_t sdlen = strlen(dataBuf);
-  INFO("*** Topic: %s, (subtopic: %s, size: %d), data: %s (size: %d) \r\n", topicBuf, topicPostBuf, stlen, dataBuf, sdlen);
-
-  for(i = 0; i < topic_len; i++)
-    topicBuf[i] = toupper(topicBuf[i]);
-
-  for(i = 0; i < data_len; i++)
-    dataBufUc[i] = toupper(dataBuf[i]);
-  dataBufUc[data_len] = 0;
-
-  if (strlen(topicPostBuf) > 1) {
-    type = strtok(topicPostBuf, "/");
-  }
-
-  INFO("*** Type: %s, data: %s \r\n", type, dataBuf);
+  INFO("MQTT DataCb: Topic = %s, Type = %s, data = %s (%s) \r\n", mtopic, type, dataBuf, dataBufUc);
 
   if (type != NULL) {
     blinks = 2;
@@ -141,8 +153,8 @@ mqttDataCb(uint32_t *args, const char* topic, uint32_t topic_len, const char *da
       os_sprintf(svalue, "%s, %s, %s, %d, %d",
         VERSION, sysCfg.mqtt_topic, sysCfg.mqtt_subtopic, sysCfg.power, sysCfg.timezone);
       if ((data_len > 0) && (payload == 1)) {
-        os_sprintf(svalue, "%s, %s, %s, %s, %s, %d",
-          svalue, sysCfg.otaUrl, sysCfg.sta_ssid, sysCfg.sta_pwd, sysCfg.mqtt_host, heartbeat);
+        os_sprintf(svalue, "%s, "MQTT_CLIENT_ID", %s, %s, %s, %s, %d",
+          svalue, system_get_chip_id(), sysCfg.otaUrl, sysCfg.sta_ssid, sysCfg.sta_pwd, sysCfg.mqtt_host, heartbeat);
       }
     }
     else if (!strcmp(type,"UPGRADE")) {
@@ -182,7 +194,11 @@ mqttDataCb(uint32_t *args, const char* topic, uint32_t topic_len, const char *da
     }
     else if (!strcmp(type,"TOPIC")) {
       if ((data_len > 0) && (data_len < 32)) {
-        strcpy(sysCfg.mqtt_topic, ((payload == 1) ? MQTT_TOPIC : dataBuf));
+        for(i = 0; i <= data_len; i++)
+          if ((dataBuf[i] == '/') || (dataBuf[i] == '+') || (dataBuf[i] == '#')) dataBuf[i] = '_';
+        os_sprintf(svalue, MQTT_CLIENT_ID, system_get_chip_id());
+        if (!strcmp(dataBuf, svalue)) payload = 1;
+        strcpy(sysCfg.mqtt_topic, (payload == 1) ? MQTT_TOPIC : dataBuf);
         restartflag = 2;
       }
       os_sprintf(svalue, "%s", sysCfg.mqtt_topic);
@@ -234,12 +250,7 @@ mqttDataCb(uint32_t *args, const char* topic, uint32_t topic_len, const char *da
       os_sprintf(stopic, "%s/%s/SYNTAX", PUB_PREFIX, sysCfg.mqtt_topic);
       strcpy(svalue, "Status, Upgrade, Otaurl, Restart, Reset, SSId, Password, Host, Topic, Timezone, Light, Power");
     }
-    MQTT_Publish(client, stopic, svalue, strlen(svalue), 0, 0);
-    if (type == NULL)
-      os_sprintf(stopic, "SYNTAX");
-    else
-      os_sprintf(stopic, "%s", type);
-    os_printf("%s = %s\n", stopic, svalue);
+    MQTT_Publish_Tx(client, stopic, svalue, strlen(svalue), 0, 0);
   }
   os_free(topicBuf);
   os_free(dataBuf);
@@ -253,8 +264,7 @@ send_power()
 
   os_sprintf(stopic, "%s/%s/%s", PUB_PREFIX, sysCfg.mqtt_topic, sysCfg.mqtt_subtopic);
   strcpy(svalue, (sysCfg.power == 0) ? "Off" : "On");
-  MQTT_Publish(&mqttClient, stopic, svalue, strlen(svalue), 0, 0);
-  os_printf("%s = %s\n", sysCfg.mqtt_subtopic, svalue);
+  MQTT_Publish_Tx(&mqttClient, stopic, svalue, strlen(svalue), 0, 0);
 }
 
 void ICACHE_FLASH_ATTR
@@ -265,8 +275,7 @@ send_heartbeat()
   heartbeat++;
   os_sprintf(stopic, "%s/%s/HEARTBEAT", PUB_PREFIX, sysCfg.mqtt_topic);
   os_sprintf(svalue, "%d", heartbeat);
-  MQTT_Publish(&mqttClient, stopic, svalue, strlen(svalue), 0, 0);
-  os_printf("HEARTBEAT = %s\n", svalue);
+  MQTT_Publish_Tx(&mqttClient, stopic, svalue, strlen(svalue), 0, 0);
 }
 
 void state_cb(void *arg)
@@ -379,7 +388,8 @@ user_init(void)
 
   os_printf("\n");
   uart0_tx_buffer("\n", os_strlen("\n"));
-  os_printf("Project %s (Topic %s) with version %s\n", PROJECT, sysCfg.mqtt_topic, VERSION);
+  os_printf("Project %s (Topic %s, Fallback "MQTT_CLIENT_ID") Version %s\n",
+    PROJECT, sysCfg.mqtt_topic, system_get_chip_id(), VERSION);
 
   MQTT_InitConnection(&mqttClient, sysCfg.mqtt_host, MQTT_PORT, DEFAULT_SECURITY);
   os_sprintf(stopic, MQTT_CLIENT_ID, system_get_chip_id());

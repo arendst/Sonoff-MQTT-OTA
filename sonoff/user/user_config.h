@@ -21,7 +21,7 @@
 #define MQTT_PORT           1883
 #define DEFAULT_SECURITY    0
 
-#define MQTT_CLIENT_ID      "DVES_%08X"
+#define MQTT_CLIENT_ID      "DVES_%06X"  // Also fall back topic using Chip Id = last 6 characters of MAC address
 #define MQTT_USER           "DVES_USER"
 #define MQTT_PASS           "DVES_PASS"
 #define MQTT_KEEPALIVE      120    // seconds
