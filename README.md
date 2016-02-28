@@ -87,9 +87,9 @@ otaurl 1 | Reset otaurl to ```user_config.h``` value
 otaurl your-otaurl | Set otaurl
 upgrade 1 | Download ota firmware from your web server and restart
 
-If the same topic has been defined to more than one sonoff an individual sonoff can still be addressed by the fall back topic MQTT_CLIENT_ID as defined in user_config.h. The fall back topic will be ```DVES_<last six digits of sonoff MAC address>```.
+If the same topic has been defined to more than one sonoff an individual sonoff can still be addressed by the fall back topic MQTT_CLIENT_ID as defined in user_config.h. The fall back topic will be ```DVES_<last six characters of MAC address>```.
 ## Tips
-- To aid in finding the IP address of sonoff the network name will be ```ESP-<MQTT topic>```. So the default name is ```ESP-sonoff```
+- To aid in finding the IP address of sonoff the network name will be ```ESP-<last six characters of MAC address>-<MQTT topic>```. So the default name is ```ESP-123456-sonoff```
 - The initial firmware from ```api/sonoff/user1.bin``` can be flashed using the SDK 1.4 provided bin files with the following esptool.py command line:
 ```esptool.py --port /dev/ttyUSB0 write_flash -fs 8m 0x00000 boot_v1.4\(b1\).bin 0x01000 user1.bin 0xFC000 esp_init_data_default.bin 0xFE000 blank.bin```
 - Use the group topic to address several sonoffs with one (restricted) MQTT command
