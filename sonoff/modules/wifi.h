@@ -1,12 +1,8 @@
 #ifndef USER_WIFI_H_
 #define USER_WIFI_H_
 
-#ifndef TDEBUG
-#define TDEBUG 0
-#endif
-
 #ifndef WIFI_HOSTNAME
-#define WIFI_HOSTNAME  "ESP-%s"
+#define WIFI_HOSTNAME  "ESP-%06X-%s"
 #endif
 
 #define WIFI_STATUS       0

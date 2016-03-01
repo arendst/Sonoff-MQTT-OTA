@@ -1,10 +1,6 @@
 #ifndef _RTC_H_
 #define _RTC_H_
 
-#ifndef TDEBUG
-#define TDEBUG 0
-#endif
-
 #define NTP_SERVER1 "pool.ntp.org"
 #define NTP_SERVER2 "nl.pool.ntp.org"
 #define NTP_SERVER3 "0.nl.pool.ntp.org"

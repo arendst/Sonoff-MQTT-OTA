@@ -8,12 +8,7 @@
 #include "osapi.h"
 #include "user_interface.h"
 #include "rtc.h"
-
-#if TDEBUG
-#define INFO(...) os_printf(__VA_ARGS__)
-#else
-#define INFO(...)
-#endif
+#include "debug.h"
 
 #define LEAP_YEAR(Y) ( ((1970+Y)>0) && !((1970+Y)%4) && ( ((1970+Y)%100) || !((1970+Y)%400) ) )
 
@@ -90,7 +85,7 @@ rtc_second()
     if ((rtcTime.Second == 10) && !ntpsync) {
       ntpsync = 1;
       myrtc = sntp_get_current_timestamp() -1;
-      INFO("sntp: %d, %s \n", myrtc, sntp_get_real_time(myrtc));
+      INFO("RTC: sntp %d, %s \n", myrtc, sntp_get_real_time(myrtc));
     }
     if (rtcTime.Second == 40) ntpsync = 0;
   }

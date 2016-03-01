@@ -5,10 +5,6 @@
 #include "eagle_soc.h"
 #include "c_types.h"
 
-#ifndef TDEBUG
-#define TDEBUG 0
-#endif
-
 #define RX_BUFF_SIZE    256
 #define TX_BUFF_SIZE    100
 #define UART0   0

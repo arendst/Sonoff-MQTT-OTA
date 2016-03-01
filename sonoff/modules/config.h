@@ -1,10 +1,6 @@
 #ifndef USER_CONFIG_H_
 #define USER_CONFIG_H_
 
-#ifndef TDEBUG
-#define TDEBUG 0
-#endif
-
 typedef struct{
   uint32_t cfg_holder;
   char sta_ssid[32];

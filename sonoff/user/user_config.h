@@ -1,12 +1,10 @@
 #ifndef _USER_CONFIG_H_
 #define _USER_CONFIG_H_
 
-#ifndef TDEBUG
-#define TDEBUG              0           // 0 = No serial debug info, 1 = Serial debug info
-#endif
+//#define GLOBAL_DEBUG_ON                  // Enable serial debug info
 
-#define CFG_HOLDER          0x20160227  // Change this value to load default configurations
-#define CFG_LOCATION        0xF8        // Please don't change or if you know what you doing
+#define CFG_HOLDER          0x20160227   // Change this value to load default configurations
+#define CFG_LOCATION        0xF8         // Please don't change or if you know what you doing
 
 // Wifi
 #define STA_SSID            "indebuurt3"

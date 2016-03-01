@@ -14,12 +14,7 @@
 #include "ota.h"
 #include "rtc.h"
 #include "gpio.h"
-
-#if TDEBUG
-#define INFO(...) os_printf(__VA_ARGS__)
-#else
-#define INFO(...)
-#endif
+#include "debug.h"
 
 #define REL_PIN       12             // GPIO 12 = Red Led and Relay (0 = Off, 1 = On)
 #define REL_MUX       PERIPHS_IO_MUX_MTDI_U
@@ -54,12 +49,6 @@ uint8_t multipress = 0;
 uint16_t blinks = 3;
 uint8_t blinkstate = 1;
 
-// we do not use this app as SSL server
-unsigned char *default_certificate;
-unsigned int default_certificate_len = 0;
-unsigned char *default_private_key;
-unsigned int default_private_key_len = 0;
-
 void ICACHE_FLASH_ATTR
 wifiConnectCb(uint8_t status)
 {
@@ -85,7 +74,7 @@ mqttConnectedCb(uint32_t *args)
   char stopic[40], svalue[40];
 
   MQTT_Client* client = (MQTT_Client*)args;
-  INFO("MQTT: Connected\r\n");
+  INFO("APP: MQTT Connected\n");
 
   os_sprintf(stopic, "%s/%s/#", SUB_PREFIX, sysCfg.mqtt_topic);
   MQTT_Subscribe(client, stopic, 0);
@@ -123,16 +112,15 @@ mqttDataCb(uint32_t *args, const char* topic, uint32_t topic_len, const char *da
   i = 0;
   for (str = strtok_r(topicBuf, "/", &p); str && i < 3; str = strtok_r(NULL, "/", &p))
   {
-    switch (i) {
-    case 0:  // CMND
+    switch (i++) {
+    case 0:  // cmnd
       break;
-    case 1:  // TOPIC / DVES_123456
+    case 1:  // Topic / GroupTopic / DVES_123456
       mtopic = str;
       break;
-    case 2:  // TEXT
+    case 2:  // Text
       type = str;
     }
-    i++;
   }
   if (!strcmp(mtopic, sysCfg.mqtt_grptopic)) grpflg = 1;
   if (type != NULL) for(i = 0; i < strlen(type); i++) type[i] = toupper(type[i]);
@@ -141,12 +129,11 @@ mqttDataCb(uint32_t *args, const char* topic, uint32_t topic_len, const char *da
   dataBuf[data_len] = 0;
   for(i = 0; i <= data_len; i++) dataBufUc[i] = toupper(dataBuf[i]);
 
-  INFO("MQTT DataCb: Topic = %s (%d), Type = %s, data = %s (%s) \r\n", mtopic, grpflg, type, dataBuf, dataBufUc);
+  INFO("APP: MQTT DataCb Topic = %s, Group = %d, Type = %s, data = %s (%s)\n", mtopic, grpflg, type, dataBuf, dataBufUc);
 
   if (type != NULL) {
     blinks = 2;
     os_sprintf(stopic, "%s/%s/%s", PUB_PREFIX, sysCfg.mqtt_topic, type);
-//    os_sprintf(stopic, "%s/%s/%s", PUB_PREFIX, mtopic, type);
     strcpy(svalue, "Error");
 
     uint16_t payload = atoi(dataBuf);
@@ -160,6 +147,12 @@ mqttDataCb(uint32_t *args, const char* topic, uint32_t topic_len, const char *da
       if ((data_len > 0) && (payload == 1)) {
         os_sprintf(svalue, "%s, %s, "MQTT_CLIENT_ID", %s, %s, %s, %s, %d",
           svalue, sysCfg.mqtt_grptopic, system_get_chip_id(), sysCfg.otaUrl, sysCfg.sta_ssid, sysCfg.sta_pwd, sysCfg.mqtt_host, heartbeat);
+      }
+      if ((data_len > 0) && (payload == 2)) {
+#ifdef SERIAL_IO
+        system_print_meminfo();
+#endif
+        os_sprintf(svalue, "Version %s, Boot %d, SDK %s", VERSION, system_get_boot_version(), system_get_sdk_version());
       }
     }
     else if (!grpflg && !strcmp(type,"UPGRADE")) {
@@ -269,9 +262,8 @@ mqttDataCb(uint32_t *args, const char* topic, uint32_t topic_len, const char *da
     }
     if (type == NULL) {
       blinks = 1;
-      INFO("*** Syntax error \r\n");
+      INFO("APP: Syntax error\n");
       os_sprintf(stopic, "%s/%s/SYNTAX", PUB_PREFIX, sysCfg.mqtt_topic);
-//      os_sprintf(stopic, "%s/%s/SYNTAX", PUB_PREFIX, mtopic);
       if (!grpflg)
         strcpy(svalue, "Status, Upgrade, Otaurl, Restart, Reset, Smartconfig, SSId, Password, Host, GroupTopic, Topic, Timezone, Light, Power");
       else
@@ -338,7 +330,7 @@ void state_cb(void *arg)
       send_power();
     } else {
       multipress++;
-      INFO("Multipress %d\n", multipress);
+      INFO("APP: Multipress %d\n", multipress);
     }
     blinks = 1;
     multiwindow = STATES;            // 1 second multi press window
@@ -417,8 +409,8 @@ user_init(void)
 
   os_printf("\n");
   uart0_tx_buffer("\n", os_strlen("\n"));
-  os_printf("Project %s (Topic %s, Fallback "MQTT_CLIENT_ID", GroupTopic %s) Version %s\n",
-    PROJECT, sysCfg.mqtt_topic, system_get_chip_id(), sysCfg.mqtt_grptopic, VERSION);
+  os_printf("Project %s (Topic %s, Fallback "MQTT_CLIENT_ID", GroupTopic %s) Version %s (Boot %d, SDK %s)\n",
+    PROJECT, sysCfg.mqtt_topic, system_get_chip_id(), sysCfg.mqtt_grptopic, VERSION, system_get_boot_version(), system_get_sdk_version());
 
   MQTT_InitConnection(&mqttClient, sysCfg.mqtt_host, MQTT_PORT, DEFAULT_SECURITY);
   os_sprintf(stopic, MQTT_CLIENT_ID, system_get_chip_id());
@@ -446,5 +438,5 @@ user_init(void)
   os_timer_setfn(&state_timer, (os_timer_func_t *)state_cb, (void *)0);
   os_timer_arm(&state_timer, 1000 / STATES, 1);
 
-  INFO("System started ...\r\n");
+  INFO("APP: Started\n");
 }

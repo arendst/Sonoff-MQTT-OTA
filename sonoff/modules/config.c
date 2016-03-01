@@ -11,12 +11,7 @@
 #include "user_interface.h"
 #include "config.h"
 #include "user_config.h"
-
-#if TDEBUG
-#define INFO(...) os_printf(__VA_ARGS__)
-#else
-#define INFO(...)
-#endif
+#include "debug.h"
 
 SYSCFG sysCfg;
 SYSCFG myCfg;
@@ -25,7 +20,7 @@ SAVE_FLAG saveFlag;
 void ICACHE_FLASH_ATTR
 CFG_Default()
 {
-  INFO("Use default configuration\r\n");
+  INFO("CONFIG: Use default configuration\r\n");
   os_memset(&sysCfg, 0x00, sizeof(sysCfg));
 
   sysCfg.cfg_holder = CFG_HOLDER;
@@ -47,7 +42,7 @@ void ICACHE_FLASH_ATTR
 CFG_Save()
 {
   if (os_memcmp(&myCfg, &sysCfg, sizeof(sysCfg))) {
-    INFO("Save configuration to flash ...\r\n");
+    INFO("CONFIG: Save configuration to flash ...\r\n");
     myCfg = sysCfg;
     spi_flash_read((CFG_LOCATION + 3) * SPI_FLASH_SEC_SIZE, (uint32 *)&saveFlag, sizeof(SAVE_FLAG));
     saveFlag.flag = (saveFlag.flag == 0) ? 1 : 0;
@@ -61,7 +56,7 @@ CFG_Save()
 void ICACHE_FLASH_ATTR
 CFG_Load()
 {
-  INFO("Load configuration from flash ...\r\n");
+  INFO("CONFIG: Load configuration from flash ...\r\n");
   spi_flash_read((CFG_LOCATION + 3) * SPI_FLASH_SEC_SIZE, (uint32 *)&saveFlag, sizeof(SAVE_FLAG));
   spi_flash_read((CFG_LOCATION + saveFlag.flag) * SPI_FLASH_SEC_SIZE, (uint32 *)&myCfg, sizeof(SYSCFG));
   if(myCfg.cfg_holder != CFG_HOLDER) CFG_Default();

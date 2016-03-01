@@ -11,12 +11,7 @@
 #include "mem.h"
 #include "upgrade.h"
 #include "ota.h"
-
-#if TDEBUG
-#define INFO(...) os_printf(__VA_ARGS__)
-#else
-#define INFO(...)
-#endif
+#include "debug.h"
 
 #define pHeadStatic "Connection: keep-alive\r\n\
 Cache-Control: no-cache\r\n\

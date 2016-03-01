@@ -14,12 +14,7 @@
 #include "osapi.h"
 #include "uart.h"
 #include "uart_register.h"
-
-#if TDEBUG
-#define INFO(...) os_printf(__VA_ARGS__)
-#else
-#define INFO(...)
-#endif
+#include "debug.h"
 
 // petes buffer for serial in
 //char serialInBuf[128];

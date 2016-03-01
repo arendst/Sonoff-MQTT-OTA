@@ -1,1 +1,1 @@
-{"application":"sonoff","last":{"version":"0.5.5","created":"2016-02-28T12:56:47.0000","protocol":"http:","host":"sidnas2","path":"/api/sonoff/user2.bin"}}
+{"application":"sonoff","last":{"version":"0.5.6","created":"2016-03-01T15:31:51.0000","protocol":"http:","host":"sidnas2","path":"/api/sonoff/user2.bin"}}

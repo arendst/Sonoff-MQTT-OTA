@@ -1,10 +1,6 @@
 #ifndef _OTA_H_
 #define _OTA_H_
 
-#ifndef TDEBUG
-#define TDEBUG 0
-#endif
-
 /*
 * Only http is supported but a different port may be used.
 * The following urls are handled correctly:
