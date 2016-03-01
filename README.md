@@ -57,6 +57,7 @@ light 0 | Turn power Off
 light 2 | Toggle power
 status | Show abbreviated status information
 status 1 | Show all status information
+status 2 | Show version information
 grouptopic | Show current MQTT group topic
 grouptopic 1 | Reset MQTT group topic to ```user_config.h``` value and restart
 grouptopic your-grouptopic | Set MQTT group topic and restart
