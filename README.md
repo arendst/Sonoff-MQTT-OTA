@@ -1,5 +1,7 @@
 ## Sonoff-MQTT-OTA
 Provide ESP8266 based [itead Sonoff](https://www.itead.cc/sonoff-wifi-wireless-switch.html) with MQTT and 'Over the Air' or OTA firmware.
+
+See [Sonoff-MQTT-OTA-Arduino](https://github.com/arendst/Sonoff-MQTT-OTA-Arduino) for the Arduino IDE version.
 ## Prerequisite
 Install the ESP8266 development environment from [esp8266-dev](https://github.com/nqd/esp8266-dev).
 
