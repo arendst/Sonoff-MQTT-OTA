@@ -1,3 +1,4 @@
+<img alt="Sonoff" src="https://github.com/arendst/arendst.github.io/blob/master/media/sonoff.jpg" height="200" align="right" /> 
 ## Sonoff-MQTT-OTA
 Provide ESP8266 based [itead Sonoff](https://www.itead.cc/sonoff-wifi-wireless-switch.html) with MQTT and 'Over the Air' or OTA firmware.
 
@@ -14,7 +15,10 @@ Install php and a local web server (ie apache) for OTA and copy directory ```api
 ## Compile and upload
 Update ```sonoff/user/user_config.h``` with your specific Wifi and MQTT parameters.
 
-Compile source with ```make``` and flash once to sonoff using cable connection as shown in [Peter Scargill's blog](http://tech.scargill.net/itead-slampher-and-sonoff) with ```make flash```. **Do not connect AC power during the flash cable connection**. 
+Compile source with ```make``` and flash once to sonoff using cable connection as shown in [Peter Scargill's blog](http://tech.scargill.net/itead-slampher-and-sonoff) with ```make flash```.
+<img alt="Connection diagram" src="https://github.com/arendst/arendst.github.io/blob/master/media/ProgramESP8266.jpg" height="260" /> 
+
+**Do not connect AC power during the flash cable connection**. 
 
 Compile and upload OTA images to your web server with ```make clean; make IMAGE=1; make register; make clean; make IMAGE=2; make register```.
 
