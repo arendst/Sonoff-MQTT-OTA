@@ -16,6 +16,7 @@ Install php and a local web server (ie apache) for OTA and copy directory ```api
 Update ```sonoff/user/user_config.h``` with your specific Wifi and MQTT parameters.
 
 Compile source with ```make``` and flash once to sonoff using cable connection as shown in [Peter Scargill's blog](http://tech.scargill.net/itead-slampher-and-sonoff) with ```make flash```.
+
 <img alt="Connection diagram" src="https://github.com/arendst/arendst.github.io/blob/master/media/ProgramESP8266.jpg" height="260" /> 
 
 **Do not connect AC power during the flash cable connection**. 
