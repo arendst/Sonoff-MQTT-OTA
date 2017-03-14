@@ -1,10 +1,10 @@
 <img alt="Sonoff" src="https://github.com/arendst/arendst.github.io/blob/master/media/sonoff.jpg" height="200" align="right" /> 
 ## Sonoff-MQTT-OTA
+This software is End of Life. New features will be introduced in **Sonoff-Tasmota** available on [https://github.com/arendst/Sonoff-Tasmota](https://github.com/arendst/Sonoff-Tasmota)
+
 Provide ESP8266 based [itead Sonoff](https://www.itead.cc/sonoff-wifi-wireless-switch.html) with MQTT and 'Over the Air' or OTA firmware.
 
 See [Sonoff-MQTT-OTA-Arduino](https://github.com/arendst/Sonoff-MQTT-OTA-Arduino) for the Arduino IDE version.
-
-This software is End of Life and new features will be introduced in the **NextGen version** only available on [https://github.com/arendst/Sonoff-Tasmota](https://github.com/arendst/Sonoff-Tasmota)
 ## Prerequisite
 Install the ESP8266 development environment from [esp8266-dev](https://github.com/nqd/esp8266-dev).
 
