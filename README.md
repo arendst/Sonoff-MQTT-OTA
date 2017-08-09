@@ -1,4 +1,4 @@
-## Sonoff-MQTT-OTA
+## Sonoff-MQTT-OTA - End of Life
 <img alt="Sonoff" src="https://github.com/arendst/arendst.github.io/blob/master/media/sonoff.jpg" height="200" align="right" /> 
 
 This software is End of Life. New features will be introduced in **Sonoff-Tasmota** available on [https://github.com/arendst/Sonoff-Tasmota](https://github.com/arendst/Sonoff-Tasmota)
